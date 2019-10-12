@@ -3,6 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 import data_wrangling as dw
+import dash_table
 import plotly.express as px
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
@@ -106,7 +107,20 @@ def make_composer_figure(value, clickData):
             return dcc.Graph(figure=fig, id="composer-bar", config={
                                 'displayModeBar': False
                                  })
-        elif value
+        elif value == "USA":
+            year = clickData["points"][0]["customdata"][0]
+            location = clickData["points"][0]["location"]
+            print(year)
+            composer_events = \
+            all_performances[(all_performances["State"] == location) & (all_performances["year"] == year)].groupby(
+                'composerName')['programID'].nunique().reset_index(name="count").sort_values(
+                by='count', ascending=True).tail(20)
+            fig = px.bar(composer_events, x="count", y="composerName", orientation='h',
+                         title=f'Number of Events by Composer (top 20) in {location}, USA in {year}')
+            fig.update_layout(xaxis_type="log")
+            return dcc.Graph(figure=fig, id="composer-bar", config={
+                'displayModeBar': False
+            })
     else:
         return html.P("Select a point on the map!")
 
@@ -128,6 +142,20 @@ def make_conductor_figure(value, clickData):
             return dcc.Graph(figure=fig, id="conductor-bar", config={
                                 'displayModeBar': False
                                  })
+        elif value == "USA":
+            year = clickData["points"][0]["customdata"][0]
+            location = clickData["points"][0]["location"]
+            print(year)
+            composer_events = \
+            all_performances[(all_performances["State"] == location) & (all_performances["year"] == year)].groupby(
+                'conductorName')['programID'].nunique().reset_index(name="count").sort_values(
+                by='count', ascending=True).tail(20)
+            fig = px.bar(composer_events, x="count", y="conductorName", orientation='h',
+                         title=f'Number of Events by Conductor (top 20) in {location}, USA in {year}')
+            fig.update_layout(xaxis_type="log")
+            return dcc.Graph(figure=fig, id="conductor-bar", config={
+                'displayModeBar': False
+            })
     else:
         return html.P("Select a point on the map!")
 
