@@ -1,6 +1,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 import data_wrangling as dw
 import plotly.express as px
 from dash.dependencies import Input, Output
@@ -26,23 +27,25 @@ app = dash.Dash(__name__)
 app.layout = html.Div([
 
     html.Div([
-        dcc.Loading(dcc.Graph(id="location-graph", config={
-        'displayModeBar': False
-         })),
-        dcc.Dropdown(
-            id='location-dropdown',
-            options=[
-                {'label': 'World', 'value': 'World'},
-                {'label': 'USA', 'value': 'USA'}
-            ],
-            value='World',
-            clearable=False
-        ),
-        html.P(id='placeholder-text'),
-        dcc.Loading(dcc.Graph(id="example-graph", config={
+        html.Div([
+                dcc.Loading(dcc.Graph(id="location-graph", config={
                 'displayModeBar': False
                  })),
-    ], style={"width": "50%"})
+                dcc.Dropdown(
+                    id='location-dropdown',
+                    options=[
+                        {'label': 'World', 'value': 'World'},
+                        {'label': 'USA', 'value': 'USA'}
+                    ],
+                    value='World',
+                    clearable=False
+                ),
+                html.P(id='placeholder-text'),
+            ], style={"width": "50%", "display": "inline-block"}),
+            # html.Div([dcc.Loading(dcc.Graph(id="example-graph", config={
+            #                     'displayModeBar': False
+            #                      }))], style={"width": "40%", "display": "inline-block"})
+        ], style={"width": "100%"})
 
 ])
 
@@ -60,20 +63,31 @@ app.layout = html.Div([
 
 @app.callback(Output("location-graph", "figure"),
               [Input('location-dropdown', 'value')])
-def make_figure(value):
+def make_location_figure(value):
     if value == "World":
-        pd_data = big_location_aggregation.sort_values("year").reset_index(drop=True)
-        fig = px.scatter_geo(pd_data, locations="geocode", color="count", hover_name="country",
+        fig = px.scatter_geo(big_location_aggregation, locations="geocode", color="count", hover_name="country",
                          animation_frame="year", projection="natural earth", size="log_count", hover_data=["year"],
                          color_continuous_scale=px.colors.cmocean.delta, title="Number of events per Country per Year")
 
         return fig
 
     elif value == "USA":
-        pd_data = big_location_aggregation_state.sort_values("year").reset_index(drop=True)
-        return px.scatter_geo(pd_data, locations="State", color="count", hover_name="State",
+        return px.scatter_geo(big_location_aggregation_state, locations="State", color="count", hover_name="State",
                      animation_frame="year", scope="usa", locationmode="USA-states", size="log_count", hover_data=["year"],
                      color_continuous_scale=px.colors.cmocean.delta, title="Number of events per State per Year (USA)")
+
+
+@app.callback(Output("example-graph", "figure"),
+              [Input('location-dropdown', 'value')])
+def make_example_figure(value):
+    if value == "World":
+        composer_events = all_performances.groupby('composerName')['programID'].nunique().reset_index(name="count").sort_values(
+            by='count', ascending=True).tail(20)
+        fig = px.bar(composer_events, x="count", y="composerName", orientation='h',
+                     title='Number of Events by Composer (top 20)')
+        fig.update_layout(xaxis_type="log")
+        return fig
+
 
 
 @app.callback(Output("placeholder-text", 'children'),
@@ -229,6 +243,7 @@ def show_clickdata(data):
 
 
 if __name__ == '__main__':
-    big_location_aggregation = dw.read_country_data()
-    big_location_aggregation_state = dw.read_state_data()
+    big_location_aggregation = dw.read_country_data().sort_values("year").reset_index(drop=True)
+    big_location_aggregation_state = dw.read_state_data().sort_values("year").reset_index(drop=True)
+    all_performances = dw.read_all_performances().sort_values("year").reset_index(drop=True)
     app.run_server(debug=True)
