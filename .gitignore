@@ -1,4 +1,4 @@
 .idea/
-data/
+data/all_performances_preprocessed_v6.csv
 .DS_Store
 __pycache__/

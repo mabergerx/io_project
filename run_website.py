@@ -6,8 +6,6 @@ import data_wrangling as dw
 import dash_table
 import plotly.express as px
 from dash.dependencies import Input, Output
-import plotly.graph_objs as go
-import pandas as pd
 import json
 
 
@@ -172,4 +170,4 @@ if __name__ == '__main__':
     big_location_aggregation = dw.read_country_data().sort_values("year").reset_index(drop=True)
     big_location_aggregation_state = dw.read_state_data().sort_values("year").reset_index(drop=True)
     all_performances = dw.read_all_performances().sort_values("year").reset_index(drop=True)
-    app.run_server(debug=True)
+    app.run_server(debug=False, port=5000, host='0.0.0.0')
