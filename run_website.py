@@ -41,15 +41,20 @@ app.layout = html.Div([
                     clearable=False
                 ),
                 html.P(id='placeholder-text'),
-            ]), width=6),
+            ]), width=12),
                 dbc.Col(dbc.Tabs(
             [
                 dbc.Tab([dcc.Loading(html.Div(id="composer-graph"))],label="Composer", tab_id="tab-1"),
                 dbc.Tab([dcc.Loading(html.Div(id="conductor-graph"))], label="Conductor", tab_id="tab-2"),
+                dbc.Tab([dcc.Loading(html.Div(id="worktitle-graph"))], label="WorkTitle", tab_id="tab-3"),
+                dbc.Tab([dcc.Loading(html.Div(id="venue-graph"))], label="Venue", tab_id="tab-4"),
+                dbc.Tab([dcc.Loading(html.Div(id="soloist-graph"))], label="Soloist", tab_id="tab-5"),
+                dbc.Tab([dcc.Loading(html.Div(id="orchestra-graph"))], label="Orchestra", tab_id="tab-6"),
+                dbc.Tab([dcc.Loading(html.Div(id="soloinstrument-graph"))], label="Solo Instrument", tab_id="tab-7"),
             ],
             id="tabs",
             active_tab="tab-1",
-        ), style={"paddingTop": "20px"})]
+        ), style={"paddingTop": "20px"}, width=12)]
         ),
 ])
 
@@ -131,7 +136,6 @@ def make_conductor_figure(value, clickData):
         if value == "World":
             year = clickData["points"][0]["customdata"][0]
             location = clickData["points"][0]["location"]
-            print(year)
             composer_events = all_performances[(all_performances["geocode"] == location) & (all_performances["year"] == year)].groupby('conductorName')['programID'].nunique().reset_index(name="count").sort_values(
                 by='count', ascending=True).tail(20)
             fig = px.bar(composer_events, x="count", y="conductorName", orientation='h',
@@ -157,6 +161,45 @@ def make_conductor_figure(value, clickData):
     else:
         return html.P("Select a point on the map!")
 
+
+@app.callback(Output("worktitle-graph", "children"),
+              [Input("location-dropdown", "value"),
+               Input("location-graph", "clickData")])
+def make_worktitle_figure(value, clickData):
+    if clickData:
+        if value == "World":
+            year = clickData["points"][0]["customdata"][0]
+            location = clickData["points"][0]["location"]
+            worktitle_events = all_performances[(all_performances["geocode"] == location) & (all_performances["year"] == year)].groupby(
+                'workTitle')['programID'].nunique().reset_index(name="count").sort_values(by='count', ascending=True).tail(20)
+            fig = px.bar(worktitle_events, x="count", y="workTitle", orientation='h',
+                         title=f'Number of Events by Work title (top 20) in {location} in {year}')
+            if worktitle_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
+            return dcc.Graph(figure=fig, id="worktitle-bar", config={
+                'displayModeBar': False
+            })
+        elif value == "USA":
+            year = clickData["points"][0]["customdata"][0]
+            location = clickData["points"][0]["location"]
+            worktitle_events = \
+            all_performances[(all_performances["State"] == location) & (all_performances["year"] == year)].groupby(
+                'workTitle')['programID'].nunique().reset_index(name="count").sort_values(by='count',
+                                                                                          ascending=True).tail(20)
+            fig = px.bar(worktitle_events, x="count", y="workTitle", orientation='h',
+                         title=f'Number of Events by Work title (top 20) in {location} in {year}')
+            if worktitle_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
+            return dcc.Graph(figure=fig, id="worktitle-bar", config={
+                'displayModeBar': False
+            })
+    else:
+        return html.P("Select a point on a map!")
+
 #
 #
 #
@@ -170,4 +213,4 @@ if __name__ == '__main__':
     big_location_aggregation = dw.read_country_data().sort_values("year").reset_index(drop=True)
     big_location_aggregation_state = dw.read_state_data().sort_values("year").reset_index(drop=True)
     all_performances = dw.read_all_performances().sort_values("year").reset_index(drop=True)
-    app.run_server(debug=False, port=5000, host='0.0.0.0')
+    app.run_server(debug=True, port=5000, host='0.0.0.0')

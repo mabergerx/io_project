@@ -13,14 +13,6 @@ def give_location_events(data, year=None, top_n=20):
     return location_events
 
 
-def give_sub_df(data, year, location, composerName=None, eventType=None, conductorName=None,
-                workTitle=None, soloistName=None, orchestra=None, seasonOfYear=None):
-
-
-    return data[(data.Country == location) & (data.year == year)]
-
-
-
 def read_all_performances():
     return pd.read_csv("data/all_performances_preprocessed_v6.csv", sep=";")
 
