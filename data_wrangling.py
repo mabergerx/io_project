@@ -13,8 +13,17 @@ def give_location_events(data, year=None, top_n=20):
     return location_events
 
 
+def replace_spaces(x):
+    try:
+        return " ".join(x.split())
+    except AttributeError:
+        pass
+
+
 def read_all_performances():
-    return pd.read_csv("data/all_performances_preprocessed_v6.csv", sep=";")
+    all_p = pd.read_csv("data/all_performances_preprocessed_v6.csv", sep=";")
+    all_p["composerName"] = all_p["composerName"].apply(lambda x: replace_spaces(x))
+    return all_p
 
 
 def read_country_data():
