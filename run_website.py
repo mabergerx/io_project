@@ -30,7 +30,7 @@ app.layout = html.Div([
                 dbc.Col(html.Div([
                 dcc.Loading(dcc.Graph(id="location-graph", config={
                 'displayModeBar': False
-                 })),
+                 }, style={"marginTop": "100"})),
                 dcc.Dropdown(
                     id='location-dropdown',
                     options=[
@@ -41,7 +41,7 @@ app.layout = html.Div([
                     clearable=False
                 ),
                 html.P(id='placeholder-text'),
-            ]), width=12),
+            ]), width=9, id="map-and-dropdown", style={"marginLeft": "10%"}),
                 dbc.Col(dbc.Tabs(
             [
                 dbc.Tab([dcc.Loading(html.Div(id="composer-graph"))],label="Composer", tab_id="tab-1"),
@@ -54,8 +54,8 @@ app.layout = html.Div([
             ],
             id="tabs",
             active_tab="tab-1",
-        ), style={"paddingTop": "20px"}, width=12)]
-        ),
+        ), style={"paddingTop": "20px", "marginLeft": "10%"}, width=9)]
+        )
 ])
 
 # @app.callback(Output("content", "children"), [Input("tabs", "active_tab")])
@@ -83,14 +83,15 @@ def make_location_figure(value):
     if value == "World":
         fig = px.scatter_geo(big_location_aggregation, locations="geocode", color="count", hover_name="country",
                          animation_frame="year", projection="natural earth", size="log_count", hover_data=["year"],
-                         color_continuous_scale=px.colors.cmocean.delta, title="Number of events per Country per Year")
+                             color_continuous_scale=px.colors.cmocean.phase)
+        fig.update_layout(margin={"l": 0, "r": 0, "b": 0, "t": 10, "pad": 4})
 
         return fig
 
     elif value == "USA":
         return px.scatter_geo(big_location_aggregation_state, locations="State", color="count", hover_name="State",
                      animation_frame="year", scope="usa", locationmode="USA-states", size="log_count", hover_data=["year"],
-                     color_continuous_scale=px.colors.cmocean.delta, title="Number of events per State per Year (USA)")
+                              color_continuous_scale=px.colors.cmocean.phase)
 #
 
 @app.callback(Output("composer-graph", "children"),
@@ -101,26 +102,34 @@ def make_composer_figure(value, clickData):
         if value == "World":
             year = clickData["points"][0]["customdata"][0]
             location = clickData["points"][0]["location"]
-            print(year)
             composer_events = all_performances[(all_performances["geocode"] == location) & (all_performances["year"] == year)].groupby('composerName')['programID'].nunique().reset_index(name="count").sort_values(
                 by='count', ascending=True).tail(20)
-            fig = px.bar(composer_events, x="count", y="composerName", orientation='h',
+            fig = px.bar(composer_events, x="count", y="composerName", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase, text="count",
                          title=f'Number of Events by Composer (top 20) in {location} in {year}')
-            fig.update_layout(xaxis_type="log")
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True, "autorange": True}, yaxis={"automargin": True})
+            if composer_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
             return dcc.Graph(figure=fig, id="composer-bar", config={
                                 'displayModeBar': False
                                  })
         elif value == "USA":
             year = clickData["points"][0]["customdata"][0]
             location = clickData["points"][0]["location"]
-            print(year)
             composer_events = \
             all_performances[(all_performances["State"] == location) & (all_performances["year"] == year)].groupby(
                 'composerName')['programID'].nunique().reset_index(name="count").sort_values(
                 by='count', ascending=True).tail(20)
-            fig = px.bar(composer_events, x="count", y="composerName", orientation='h',
+            fig = px.bar(composer_events, x="count", y="composerName", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase,
                          title=f'Number of Events by Composer (top 20) in {location}, USA in {year}')
-            fig.update_layout(xaxis_type="log")
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True}, yaxis={"automargin": True})
+            if composer_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
             return dcc.Graph(figure=fig, id="composer-bar", config={
                 'displayModeBar': False
             })
@@ -136,25 +145,34 @@ def make_conductor_figure(value, clickData):
         if value == "World":
             year = clickData["points"][0]["customdata"][0]
             location = clickData["points"][0]["location"]
-            composer_events = all_performances[(all_performances["geocode"] == location) & (all_performances["year"] == year)].groupby('conductorName')['programID'].nunique().reset_index(name="count").sort_values(
+            conductor_events = all_performances[(all_performances["geocode"] == location) & (all_performances["year"] == year)].groupby('conductorName')['programID'].nunique().reset_index(name="count").sort_values(
                 by='count', ascending=True).tail(20)
-            fig = px.bar(composer_events, x="count", y="conductorName", orientation='h',
+            fig = px.bar(conductor_events, x="count", y="conductorName", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase,
                          title=f'Number of Events by Conductor (top 20) in {location} in {year}')
-            fig.update_layout(xaxis_type="log")
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True}, yaxis={"automargin": True})
+            if conductor_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
             return dcc.Graph(figure=fig, id="conductor-bar", config={
                                 'displayModeBar': False
                                  })
         elif value == "USA":
             year = clickData["points"][0]["customdata"][0]
             location = clickData["points"][0]["location"]
-            print(year)
-            composer_events = \
+            conductor_events = \
             all_performances[(all_performances["State"] == location) & (all_performances["year"] == year)].groupby(
                 'conductorName')['programID'].nunique().reset_index(name="count").sort_values(
                 by='count', ascending=True).tail(20)
-            fig = px.bar(composer_events, x="count", y="conductorName", orientation='h',
+            fig = px.bar(conductor_events, x="count", y="conductorName", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase,
                          title=f'Number of Events by Conductor (top 20) in {location}, USA in {year}')
-            fig.update_layout(xaxis_type="log")
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True}, yaxis={"automargin": True})
+            if conductor_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
             return dcc.Graph(figure=fig, id="conductor-bar", config={
                 'displayModeBar': False
             })
@@ -172,8 +190,10 @@ def make_worktitle_figure(value, clickData):
             location = clickData["points"][0]["location"]
             worktitle_events = all_performances[(all_performances["geocode"] == location) & (all_performances["year"] == year)].groupby(
                 'workTitle')['programID'].nunique().reset_index(name="count").sort_values(by='count', ascending=True).tail(20)
-            fig = px.bar(worktitle_events, x="count", y="workTitle", orientation='h',
+            fig = px.bar(worktitle_events, x="count", y="workTitle", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase,
                          title=f'Number of Events by Work title (top 20) in {location} in {year}')
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True}, yaxis={"automargin": True})
             if worktitle_events["count"].max() > 100:
                 fig.update_layout(xaxis_type="log")
             else:
@@ -188,8 +208,10 @@ def make_worktitle_figure(value, clickData):
             all_performances[(all_performances["State"] == location) & (all_performances["year"] == year)].groupby(
                 'workTitle')['programID'].nunique().reset_index(name="count").sort_values(by='count',
                                                                                           ascending=True).tail(20)
-            fig = px.bar(worktitle_events, x="count", y="workTitle", orientation='h',
+            fig = px.bar(worktitle_events, x="count", y="workTitle", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase,
                          title=f'Number of Events by Work title (top 20) in {location} in {year}')
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True}, yaxis={"automargin": True})
             if worktitle_events["count"].max() > 100:
                 fig.update_layout(xaxis_type="log")
             else:
@@ -200,13 +222,106 @@ def make_worktitle_figure(value, clickData):
     else:
         return html.P("Select a point on a map!")
 
+
+@app.callback(Output("venue-graph", "children"),
+              [Input("location-dropdown", "value"),
+               Input("location-graph", "clickData")])
+def make_venue_figure(value, clickData):
+    if clickData:
+        if value == "World":
+            year = clickData["points"][0]["customdata"][0]
+            location = clickData["points"][0]["location"]
+            venue_events = all_performances[(all_performances["geocode"] == location) & (all_performances["year"] == year)].groupby(
+                'Venue')['programID'].nunique().reset_index(name="count").sort_values(by='count', ascending=True).tail(20)
+            fig = px.bar(venue_events, x="count", y="Venue", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase,
+                         title=f'Number of Events by Venue (top 20) in {location} in {year}')
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True}, yaxis={"automargin": True})
+            if venue_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
+            return dcc.Graph(figure=fig, id="venue-bar", config={
+                'displayModeBar': False
+            })
+        elif value == "USA":
+            year = clickData["points"][0]["customdata"][0]
+            location = clickData["points"][0]["location"]
+            venue_events = \
+            all_performances[(all_performances["State"] == location) & (all_performances["year"] == year)].groupby(
+                'Venue')['programID'].nunique().reset_index(name="count").sort_values(by='count',
+                                                                                          ascending=True).tail(20)
+            fig = px.bar(venue_events, x="count", y="Venue", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase,
+                         title=f'Number of Events by Work title (top 20) in {location} in {year}')
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True}, yaxis={"automargin": True})
+            if venue_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
+            return dcc.Graph(figure=fig, id="venue-bar", config={
+                'displayModeBar': False
+            })
+    else:
+        return html.P("Select a point on a map!")
+
+
+@app.callback(Output("soloist-graph", "children"),
+              [Input('location-dropdown', 'value'),
+               Input("location-graph", "clickData")])
+def make_soloist_figure(value, clickData):
+    if clickData:
+        if value == "World":
+            year = clickData["points"][0]["customdata"][0]
+            location = clickData["points"][0]["location"]
+            composer_events = all_performances[(all_performances["geocode"] == location) & (all_performances["year"] == year)].groupby(
+                'soloistName')['programID'].nunique().reset_index(name="count").sort_values(
+                by='count', ascending=True).tail(20)
+            fig = px.bar(composer_events, x="count", y="soloistName", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase, text="count",
+                         title=f'Number of Events by Soloist (top 20) in {location} in {year}')
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True, "autorange": True}, yaxis={"automargin": True})
+            if composer_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
+            return dcc.Graph(figure=fig, id="soloist-bar", config={
+                                'displayModeBar': False
+                                 })
+        elif value == "USA":
+            year = clickData["points"][0]["customdata"][0]
+            location = clickData["points"][0]["location"]
+            composer_events = \
+            all_performances[(all_performances["State"] == location) & (all_performances["year"] == year)].groupby(
+                'soloistName')['programID'].nunique().reset_index(name="count").sort_values(
+                by='count', ascending=True).tail(20)
+            fig = px.bar(composer_events, x="count", y="soloistName", orientation='h', color="count",
+                         color_continuous_scale=px.colors.cmocean.phase,
+                         title=f'Number of Events by Soloist (top 20) in {location}, USA in {year}')
+            fig.update_layout(xaxis={"dtick": 1, "automargin": True}, yaxis={"automargin": True})
+            if composer_events["count"].max() > 100:
+                fig.update_layout(xaxis_type="log")
+            else:
+                pass
+            return dcc.Graph(figure=fig, id="soloist-bar", config={
+                'displayModeBar': False
+            })
+    else:
+        return html.P("Select a point on the map!")
+
 #
-#
-#
+# Make a callback which clears clickData whenever we change dropdown value.
 @app.callback(Output("placeholder-text", 'children'),
               [Input("location-graph", "clickData")])
 def show_clickdata(data):
     return json.dumps(data)
+
+
+#
+@app.callback(Output("location-graph", 'clickData'),
+              [Input("location-dropdown", "value")])
+def clear_clickdata(_):
+    return None
 
 
 if __name__ == '__main__':
