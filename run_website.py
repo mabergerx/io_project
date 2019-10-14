@@ -7,23 +7,14 @@ import dash_table
 import plotly.express as px
 from dash.dependencies import Input, Output
 import json
+import pandas as pd
 
-
-# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.config['suppress_callback_exceptions']=True
 
-# print(big_location_aggregation.head(5))
-
-# df = pd.read_csv(
-#     'https://gist.githubusercontent.com/chriddyp/'
-#     'cb5392c35661370d95f300086accea51/raw/'
-#     '8e0768211f6b747c0db42a9ce9a0937dafcbd8b2/'
-#     'indicators.csv')
-
-# available_indicators = df['Indicator Name'].unique()
+TABLE_PAGE_SIZE = 10
 
 app.layout = html.Div([
 
@@ -56,27 +47,55 @@ app.layout = html.Div([
             ],
             id="tabs",
             active_tab="tab-1",
-        ), style={"paddingTop": "20px", "marginLeft": "12%"}, width=9)]
-        ), html.Div(id="testing-stuff")
+        ), style={"paddingTop": "20px", "marginLeft": "12%"}, width=9),
+            dbc.Col(dash_table.DataTable(
+        id='performances-table',
+        columns=[
+            {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+       'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+       'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+       'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+       'geocode']
+        ],
+        page_current=0,
+        page_size=TABLE_PAGE_SIZE,
+        page_action='custom',
+
+        sort_action='custom',
+        sort_mode='single',
+        style_table={'overflowX': 'scroll'},
+        sort_by=[],
+        style_cell={'font-size': 13, 'font-family':'Avenir, sans-serif'},
+        style_header={
+            "backgroundColor": "rgb(213,86,81)",
+            "color": "white",
+            "textAlign": "center",
+            'font-family':'Avenir, sans-serif'
+        }
+    ), width=9, style={"marginLeft": "12%"})]
+        )
 ])
 
-# @app.callback(Output("content", "children"), [Input("tabs", "active_tab")])
-# def switch_tab(at):
-#     if at == "tab-1":
-#         return tab1_content
-#     elif at == "tab-2":
-#         return tab2_content
-#     return html.P("This shouldn't ever be displayed...")
 
-# @app.callback(Output('location_data_country', 'data'),
-#               [Input('location-dropdown', 'value')])
-# def filter_countries(dropdown_value):
-#     if dropdown_value == "World":
-#         stuff = big_location_aggregation.reset_index(drop=True)
-#         return stuff.to_json(orient="records")
-#     elif dropdown_value == "USA":
-#         stuff = big_location_aggregation_state.reset_index(drop=True)
-#         return stuff.to_json(orient="records")
+@app.callback(
+    Output('performances-table', 'data'),
+    [Input('performances-table', "page_current"),
+     Input('performances-table', "page_size"),
+     Input('performances-table', 'sort_by')])
+def update_table(page_current, page_size, sort_by):
+    if len(sort_by):
+        dff = all_performances.sort_values(
+            sort_by[0]['column_id'],
+            ascending=sort_by[0]['direction'] == 'asc',
+            inplace=False
+        )
+    else:
+        # No sort is applied
+        dff = all_performances
+
+    return dff.iloc[
+        page_current*page_size:(page_current+ 1)*page_size
+    ].to_dict('records')
 
 
 @app.callback(Output("location-graph", "figure"),
