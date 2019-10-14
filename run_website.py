@@ -36,14 +36,14 @@ app.layout = html.Div([
             ]), width=9, id="map-and-dropdown", style={"marginLeft": "12%"}),
                 dbc.Col(dbc.Tabs(
             [
-                dbc.Tab([dcc.Loading(html.Div(id="composer-graph")), html.Div(id="composer-table")],label="Composer", tab_id="tab-1"),
-                dbc.Tab([dcc.Loading(html.Div(id="conductor-graph"))], label="Conductor", tab_id="tab-2"),
-                dbc.Tab([dcc.Loading(html.Div(id="worktitle-graph"))], label="WorkTitle", tab_id="tab-3"),
-                dbc.Tab([dcc.Loading(html.Div(id="venue-graph"))], label="Venue", tab_id="tab-4"),
-                dbc.Tab([dcc.Loading(html.Div(id="soloist-graph"))], label="Soloist", tab_id="tab-5"),
-                dbc.Tab([dcc.Loading(html.Div(id="orchestra-graph"))], label="Orchestra", tab_id="tab-6"),
-                dbc.Tab([dcc.Loading(html.Div(id="instrument-graph"))], label="Solo Instrument", tab_id="tab-7"),
-                dbc.Tab([dcc.Loading(html.Div(id="season-graph"))], label="Season", tab_id="tab-8"),
+                dbc.Tab([dcc.Loading(html.Div(id="composer-graph")), html.Div(id="composer-table", style={"marginBottom": "50px"})],label="Composer", tab_id="tab-1"),
+                dbc.Tab([dcc.Loading(html.Div(id="conductor-graph")), html.Div(id="conductor-table", style={"marginBottom": "50px"})], label="Conductor", tab_id="tab-2"),
+                dbc.Tab([dcc.Loading(html.Div(id="worktitle-graph")), html.Div(id="worktitle-table", style={"marginBottom": "50px"})], label="WorkTitle", tab_id="tab-3"),
+                dbc.Tab([dcc.Loading(html.Div(id="venue-graph")), html.Div(id="venue-table", style={"marginBottom": "50px"})], label="Venue", tab_id="tab-4"),
+                dbc.Tab([dcc.Loading(html.Div(id="soloist-graph")), html.Div(id="soloist-table", style={"marginBottom": "50px"})], label="Soloist", tab_id="tab-5"),
+                dbc.Tab([dcc.Loading(html.Div(id="orchestra-graph")), html.Div(id="orchestra-table", style={"marginBottom": "50px"})], label="Orchestra", tab_id="tab-6"),
+                dbc.Tab([dcc.Loading(html.Div(id="instrument-graph")), html.Div(id="instrument-table", style={"marginBottom": "50px"})], label="Solo Instrument", tab_id="tab-7"),
+                dbc.Tab([dcc.Loading(html.Div(id="season-graph")), html.Div(id="season-table", style={"marginBottom": "50px"})], label="Season", tab_id="tab-8"),
             ],
             id="tabs",
             active_tab="tab-1",
@@ -521,7 +521,7 @@ def create_composer_table(clickData, value, locationData):
     if value == "World":
         year = locationData["points"][0]["customdata"][0]
         location = locationData["points"][0]["location"]
-        filtered_df = all_performances[(all_performances["composerName"] == composer_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)]
+        filtered_df = all_performances[(all_performances["composerName"] == composer_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)].drop_duplicates()
         return dash_table.DataTable(
         columns=[
             {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
@@ -533,8 +533,9 @@ def create_composer_table(clickData, value, locationData):
         page_current=0,
         page_size=TABLE_PAGE_SIZE,
         data=filtered_df.to_dict('records'),
+        row_deletable=False,
         page_action='native',
-        sort_action='custom',
+        sort_action='native',
         sort_mode='single',
         style_table={'overflowX': 'scroll'},
         sort_by=[],
@@ -557,7 +558,7 @@ def create_composer_table(clickData, value, locationData):
         location = locationData["points"][0]["location"]
         filtered_df = all_performances[
             (all_performances["composerName"] == composer_name) & (all_performances["year"] == year) & (
-                        all_performances["State"] == location)]
+                        all_performances["State"] == location)].drop_duplicates()
         return dash_table.DataTable(
             columns=[
                 {'name': i, 'id': i, 'deletable': True} for i in
@@ -571,7 +572,567 @@ def create_composer_table(clickData, value, locationData):
             page_size=TABLE_PAGE_SIZE,
             data=filtered_df.to_dict('records'),
             page_action='native',
-            sort_action='custom',
+            sort_action='native',
+            sort_mode='single',
+            style_table={'overflowX': 'scroll'},
+            sort_by=[],
+            style_cell={'font-size': 13, 'font-family': 'Avenir, sans-serif', 'height': "25px"},
+            style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+            style_header={
+                "backgroundColor": "rgb(213,86,81)",
+                "color": "white",
+                "textAlign": "center",
+                'font-family': 'Avenir, sans-serif'
+            }
+        )
+
+
+@app.callback(Output("conductor-table", "children"),
+              [Input("conductor-bar", "clickData")],
+              [State('location-dropdown', 'value'),
+               State("location-graph", "clickData")]
+              )
+def create_conductor_table(clickData, value, locationData):
+    conductor_name = clickData['points'][0]['y']
+    if value == "World":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[(all_performances["conductorName"] == conductor_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+        columns=[
+            {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+       'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+       'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+       'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+       'geocode']
+        ],
+        page_current=0,
+        page_size=TABLE_PAGE_SIZE,
+        data=filtered_df.to_dict('records'),
+        page_action='native',
+        sort_action='native',
+        sort_mode='single',
+        style_table={'overflowX': 'scroll'},
+        sort_by=[],
+        style_cell={'font-size': 13, 'font-family':'Avenir, sans-serif', 'height': "25px"},
+        style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+        style_header={
+            "backgroundColor": "rgb(213,86,81)",
+            "color": "white",
+            "textAlign": "center",
+            'font-family':'Avenir, sans-serif'
+        }
+    )
+    elif value == "USA":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[
+            (all_performances["conductorName"] == conductor_name) & (all_performances["year"] == year) & (
+                        all_performances["State"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+            columns=[
+                {'name': i, 'id': i, 'deletable': True} for i in
+                ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+                 'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+                 'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+                 'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+                 'geocode']
+            ],
+            page_current=0,
+            page_size=TABLE_PAGE_SIZE,
+            data=filtered_df.to_dict('records'),
+            page_action='native',
+            sort_action='native',
+            sort_mode='single',
+            style_table={'overflowX': 'scroll'},
+            sort_by=[],
+            style_cell={'font-size': 13, 'font-family': 'Avenir, sans-serif', 'height': "25px"},
+            style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+            style_header={
+                "backgroundColor": "rgb(213,86,81)",
+                "color": "white",
+                "textAlign": "center",
+                'font-family': 'Avenir, sans-serif'
+            }
+        )
+
+
+@app.callback(Output("worktitle-table", "children"),
+              [Input("worktitle-bar", "clickData")],
+              [State('location-dropdown', 'value'),
+               State("location-graph", "clickData")]
+              )
+def create_worktitle_table(clickData, value, locationData):
+    worktitle_name = clickData['points'][0]['y']
+    if value == "World":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[(all_performances["workTitle"] == worktitle_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+        columns=[
+            {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+       'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+       'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+       'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+       'geocode']
+        ],
+        page_current=0,
+        page_size=TABLE_PAGE_SIZE,
+        data=filtered_df.to_dict('records'),
+        page_action='native',
+        sort_action='native',
+        sort_mode='single',
+        style_table={'overflowX': 'scroll'},
+        sort_by=[],
+        style_cell={'font-size': 13, 'font-family':'Avenir, sans-serif', 'height': "25px"},
+        style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+        style_header={
+            "backgroundColor": "rgb(213,86,81)",
+            "color": "white",
+            "textAlign": "center",
+            'font-family':'Avenir, sans-serif'
+        }
+    )
+    elif value == "USA":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[
+            (all_performances["workTitle"] == worktitle_name) & (all_performances["year"] == year) & (
+                        all_performances["State"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+            columns=[
+                {'name': i, 'id': i, 'deletable': True} for i in
+                ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+                 'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+                 'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+                 'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+                 'geocode']
+            ],
+            page_current=0,
+            page_size=TABLE_PAGE_SIZE,
+            data=filtered_df.to_dict('records'),
+            page_action='native',
+            sort_action='native',
+            sort_mode='single',
+            style_table={'overflowX': 'scroll'},
+            sort_by=[],
+            style_cell={'font-size': 13, 'font-family': 'Avenir, sans-serif', 'height': "25px"},
+            style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+            style_header={
+                "backgroundColor": "rgb(213,86,81)",
+                "color": "white",
+                "textAlign": "center",
+                'font-family': 'Avenir, sans-serif'
+            }
+        )
+
+
+@app.callback(Output("venue-table", "children"),
+              [Input("venue-bar", "clickData")],
+              [State('location-dropdown', 'value'),
+               State("location-graph", "clickData")]
+              )
+def create_venue_table(clickData, value, locationData):
+    venue_name = clickData['points'][0]['y']
+    if value == "World":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[(all_performances["Venue"] == venue_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+        columns=[
+            {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+       'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+       'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+       'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+       'geocode']
+        ],
+        page_current=0,
+        page_size=TABLE_PAGE_SIZE,
+        data=filtered_df.to_dict('records'),
+        page_action='native',
+        sort_action='native',
+        sort_mode='single',
+        style_table={'overflowX': 'scroll'},
+        sort_by=[],
+        style_cell={'font-size': 13, 'font-family':'Avenir, sans-serif', 'height': "25px"},
+        style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+        style_header={
+            "backgroundColor": "rgb(213,86,81)",
+            "color": "white",
+            "textAlign": "center",
+            'font-family':'Avenir, sans-serif'
+        }
+    )
+    elif value == "USA":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[
+            (all_performances["Venue"] == venue_name) & (all_performances["year"] == year) & (
+                        all_performances["State"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+            columns=[
+                {'name': i, 'id': i, 'deletable': True} for i in
+                ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+                 'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+                 'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+                 'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+                 'geocode']
+            ],
+            page_current=0,
+            page_size=TABLE_PAGE_SIZE,
+            data=filtered_df.to_dict('records'),
+            page_action='native',
+            sort_action='native',
+            sort_mode='single',
+            style_table={'overflowX': 'scroll'},
+            sort_by=[],
+            style_cell={'font-size': 13, 'font-family': 'Avenir, sans-serif', 'height': "25px"},
+            style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+            style_header={
+                "backgroundColor": "rgb(213,86,81)",
+                "color": "white",
+                "textAlign": "center",
+                'font-family': 'Avenir, sans-serif'
+            }
+        )
+
+
+@app.callback(Output("soloist-table", "children"),
+              [Input("soloist-bar", "clickData")],
+              [State('location-dropdown', 'value'),
+               State("location-graph", "clickData")]
+              )
+def create_soloist_table(clickData, value, locationData):
+    soloist_name = clickData['points'][0]['y']
+    if value == "World":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[(all_performances["soloistName"] == soloist_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+        columns=[
+            {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+       'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+       'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+       'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+       'geocode']
+        ],
+        page_current=0,
+        page_size=TABLE_PAGE_SIZE,
+        data=filtered_df.to_dict('records'),
+        page_action='native',
+        sort_action='native',
+        sort_mode='single',
+        style_table={'overflowX': 'scroll'},
+        sort_by=[],
+        style_cell={'font-size': 13, 'font-family':'Avenir, sans-serif', 'height': "25px"},
+        style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+        style_header={
+            "backgroundColor": "rgb(213,86,81)",
+            "color": "white",
+            "textAlign": "center",
+            'font-family':'Avenir, sans-serif'
+        }
+    )
+    elif value == "USA":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[
+            (all_performances["soloistName"] == soloist_name) & (all_performances["year"] == year) & (
+                        all_performances["State"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+            columns=[
+                {'name': i, 'id': i, 'deletable': True} for i in
+                ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+                 'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+                 'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+                 'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+                 'geocode']
+            ],
+            page_current=0,
+            page_size=TABLE_PAGE_SIZE,
+            data=filtered_df.to_dict('records'),
+            page_action='native',
+            sort_action='native',
+            sort_mode='single',
+            style_table={'overflowX': 'scroll'},
+            sort_by=[],
+            style_cell={'font-size': 13, 'font-family': 'Avenir, sans-serif', 'height': "25px"},
+            style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+            style_header={
+                "backgroundColor": "rgb(213,86,81)",
+                "color": "white",
+                "textAlign": "center",
+                'font-family': 'Avenir, sans-serif'
+            }
+        )
+
+
+@app.callback(Output("orchestra-table", "children"),
+              [Input("orchestra-bar", "clickData")],
+              [State('location-dropdown', 'value'),
+               State("location-graph", "clickData")]
+              )
+def create_orchestra_table(clickData, value, locationData):
+    orchestra_name = clickData['points'][0]['y']
+    if value == "World":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[(all_performances["orchestra"] == orchestra_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+        columns=[
+            {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+       'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+       'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+       'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+       'geocode']
+        ],
+        page_current=0,
+        page_size=TABLE_PAGE_SIZE,
+        data=filtered_df.to_dict('records'),
+        page_action='native',
+        sort_action='native',
+        sort_mode='single',
+        style_table={'overflowX': 'scroll'},
+        sort_by=[],
+        style_cell={'font-size': 13, 'font-family':'Avenir, sans-serif', 'height': "25px"},
+        style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+        style_header={
+            "backgroundColor": "rgb(213,86,81)",
+            "color": "white",
+            "textAlign": "center",
+            'font-family':'Avenir, sans-serif'
+        }
+    )
+    elif value == "USA":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[
+            (all_performances["orchestra"] == orchestra_name) & (all_performances["year"] == year) & (
+                        all_performances["State"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+            columns=[
+                {'name': i, 'id': i, 'deletable': True} for i in
+                ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+                 'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+                 'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+                 'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+                 'geocode']
+            ],
+            page_current=0,
+            page_size=TABLE_PAGE_SIZE,
+            data=filtered_df.to_dict('records'),
+            page_action='native',
+            sort_action='native',
+            sort_mode='single',
+            style_table={'overflowX': 'scroll'},
+            sort_by=[],
+            style_cell={'font-size': 13, 'font-family': 'Avenir, sans-serif', 'height': "25px"},
+            style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+            style_header={
+                "backgroundColor": "rgb(213,86,81)",
+                "color": "white",
+                "textAlign": "center",
+                'font-family': 'Avenir, sans-serif'
+            }
+        )
+
+
+@app.callback(Output("instrument-table", "children"),
+              [Input("instrument-bar", "clickData")],
+              [State('location-dropdown', 'value'),
+               State("location-graph", "clickData")]
+              )
+def create_instrument_table(clickData, value, locationData):
+    instrument_name = clickData['points'][0]['y']
+    if value == "World":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[(all_performances["soloistInstrument"] == instrument_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+        columns=[
+            {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+       'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+       'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+       'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+       'geocode']
+        ],
+        page_current=0,
+        page_size=TABLE_PAGE_SIZE,
+        data=filtered_df.to_dict('records'),
+        page_action='native',
+        sort_action='native',
+        sort_mode='single',
+        style_table={'overflowX': 'scroll'},
+        sort_by=[],
+        style_cell={'font-size': 13, 'font-family':'Avenir, sans-serif', 'height': "25px"},
+        style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+        style_header={
+            "backgroundColor": "rgb(213,86,81)",
+            "color": "white",
+            "textAlign": "center",
+            'font-family':'Avenir, sans-serif'
+        }
+    )
+    elif value == "USA":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[
+            (all_performances["soloistInstrument"] == instrument_name) & (all_performances["year"] == year) & (
+                        all_performances["State"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+            columns=[
+                {'name': i, 'id': i, 'deletable': True} for i in
+                ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+                 'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+                 'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+                 'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+                 'geocode']
+            ],
+            page_current=0,
+            page_size=TABLE_PAGE_SIZE,
+            data=filtered_df.to_dict('records'),
+            page_action='native',
+            sort_action='native',
+            sort_mode='single',
+            style_table={'overflowX': 'scroll'},
+            sort_by=[],
+            style_cell={'font-size': 13, 'font-family': 'Avenir, sans-serif', 'height': "25px"},
+            style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+            style_header={
+                "backgroundColor": "rgb(213,86,81)",
+                "color": "white",
+                "textAlign": "center",
+                'font-family': 'Avenir, sans-serif'
+            }
+        )
+
+
+@app.callback(Output("season-table", "children"),
+              [Input("season-bar", "clickData")],
+              [State('location-dropdown', 'value'),
+               State("location-graph", "clickData")]
+              )
+def create_season_table(clickData, value, locationData):
+    season_name = clickData['points'][0]['y']
+    if value == "World":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[(all_performances["seasonOfYear"] == season_name) & (all_performances["year"] == year) & (all_performances["geocode"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+        columns=[
+            {'name': i, 'id': i, 'deletable': True} for i in ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+       'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+       'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+       'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+       'geocode']
+        ],
+        page_current=0,
+        page_size=TABLE_PAGE_SIZE,
+        data=filtered_df.to_dict('records'),
+        page_action='native',
+        sort_action='native',
+        sort_mode='single',
+        style_table={'overflowX': 'scroll'},
+        sort_by=[],
+        style_cell={'font-size': 13, 'font-family':'Avenir, sans-serif', 'height': "25px"},
+        style_data_conditional=[
+                {
+                    'if': {'row_index': 'odd'},
+                    'backgroundColor': 'rgb(248, 248, 248)'
+                }
+            ],
+        style_header={
+            "backgroundColor": "rgb(213,86,81)",
+            "color": "white",
+            "textAlign": "center",
+            'font-family':'Avenir, sans-serif'
+        }
+    )
+    elif value == "USA":
+        year = locationData["points"][0]["customdata"][0]
+        location = locationData["points"][0]["location"]
+        filtered_df = all_performances[
+            (all_performances["seasonOfYear"] == season_name) & (all_performances["year"] == year) & (
+                        all_performances["State"] == location)].drop_duplicates()
+        return dash_table.DataTable(
+            columns=[
+                {'name': i, 'id': i, 'deletable': True} for i in
+                ['Venue', 'eventType', 'id', 'composerName', 'conductorName', 'movement',
+                 'workTitle', 'soloistInstrument', 'soloistName', 'programID',
+                 'orchestra', 'year', 'month', 'day', 'Country', 'City', 'State',
+                 'startingHour', 'startingMinute', 'paperProgram', 'seasonOfYear',
+                 'geocode']
+            ],
+            page_current=0,
+            page_size=TABLE_PAGE_SIZE,
+            data=filtered_df.to_dict('records'),
+            page_action='native',
+            sort_action='native',
             sort_mode='single',
             style_table={'overflowX': 'scroll'},
             sort_by=[],
