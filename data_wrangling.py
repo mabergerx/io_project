@@ -23,6 +23,7 @@ def replace_spaces(x):
 def read_all_performances():
     all_p = pd.read_csv("data/all_performances_preprocessed_v6.csv", sep=";")
     all_p["composerName"] = all_p["composerName"].apply(lambda x: replace_spaces(x))
+    all_p.fillna("-", inplace=True)
     return all_p
 
 
