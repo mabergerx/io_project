@@ -1,5 +1,9 @@
-import pandas as pd
+# Author: Mark Berger (https://github.com/mabergerx)
+# ==============================================================================
+"""Script that defines some utility functions for data reading and wrangling.
+"""
 
+import pandas as pd
 
 
 def give_location_events(data, year=None, top_n=20):

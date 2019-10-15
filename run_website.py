@@ -1,3 +1,12 @@
+# Author: Mark Berger (https://github.com/mabergerx)
+# ==============================================================================
+"""Script that defines the Dash website layout.
+Use:
+python run_website.py
+
+Runs a Flask server with a Dash app wrapped around it. Navigate to localhost:5000.
+"""
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -6,9 +15,6 @@ import data_wrangling as dw
 import dash_table
 import plotly.express as px
 from dash.dependencies import Input, Output, State
-import json
-import pandas as pd
-
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
